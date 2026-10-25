@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1a2233">
+<title>雾中的砂金</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23fff3cf'/%3E%3Cstop offset='1' stop-color='%23c98a3a'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='%231a2233'/%3E%3Ccircle cx='32' cy='34' r='15' fill='url(%23g)'/%3E%3Cpath d='M20 22h24' stroke='%23f1e3c4' stroke-width='3' stroke-linecap='round' opacity='.8'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<div id="backdrop"></div>
+
+<div id="stage">
+  <div id="scene">
+    <video id="vIdle" muted loop playsinline webkit-playsinline preload="auto" poster="./assets/poster1.webp" src="./assets/sj1.mp4"></video>
+    <video id="vTalk" muted loop playsinline webkit-playsinline preload="auto" poster="./assets/poster2.webp" src="./assets/sj2.mp4"></video>
+    <canvas id="crackCanvas"></canvas>
+    <div id="healSweep"></div>
+    <div id="stickerLayer"></div>
+  </div>
+  <div id="tapLayer"></div>
+  <canvas id="fogCanvas"></canvas>
+  <div id="fogHint">用指尖在雾气上画画吧</div>
+  <div id="tapHint"><span class="ring"></span><span class="ring r2"></span><em>轻触屏幕</em></div>
+
+  <!-- dialogue -->
+  <div id="dialog">
+    <div class="dlg-name"><span>砂金</span></div>
+    <p class="dlg-text" id="dlgText"></p>
+  </div>
+
+  <!-- top bar -->
+  <button id="restoreBtn" class="pill hidden" aria-label="复原屏幕">
+    <svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7" /><path d="M4 4v4.5h4.5"/></svg>
+    <span>复原屏幕</span>
+  </button>
+
+  <div id="toolbar">
+    <button id="musicBtn" class="tool on" aria-label="音乐">
+      <svg class="ico-on" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>
+      <svg class="ico-off" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/><path d="M3 3l18 18"/></svg>
+      <i class="eq"><b></b><b></b><b></b></i>
+    </button>
+    <button id="stickerBtn" class="tool" aria-label="贴纸">
+      <svg viewBox="0 0 24 24"><path d="M15.5 3H6a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3h9.5L21 15.5V6a3 3 0 0 0-3-3h-2.5z"/><path d="M21 15h-3.5a2.5 2.5 0 0 0-2.5 2.5V21"/><circle cx="9" cy="10" r="1"/><circle cx="15" cy="10" r="1"/><path d="M9 14.5c1.7 1.3 4.3 1.3 6 0"/></svg>
+    </button>
+    <button id="cameraBtn" class="tool" aria-label="拍照">
+      <svg viewBox="0 0 24 24"><path d="M3 8.5A2.5 2.5 0 0 1 5.5 6h2l1.5-2h6l1.5 2h2A2.5 2.5 0 0 1 21 8.5v9a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5z"/><circle cx="12" cy="13" r="3.6"/></svg>
+    </button>
+  </div>
+
+  <!-- sticker drawer -->
+  <div id="stickerPanel" class="hidden">
+    <div class="sp-head"><span>贴纸</span><small>拖动移动 · 双指 / 角标缩放旋转</small></div>
+    <div class="sp-list">
+      <button class="sp-item" data-id="1"><img src="./assets/sticker1.png" alt="星光眼贴纸"></button>
+      <button class="sp-item" data-id="2"><img src="./assets/sticker2.png" alt="害羞腮红贴纸"></button>
+    </div>
+    <div class="sp-foot">
+      <button id="clearStickers">清空贴纸</button>
+      <button id="closeStickers">完成</button>
+    </div>
+  </div>
+
+  <div id="flash"></div>
+</div>
+
+<!-- postcard modal -->
+<div id="postcard" class="hidden">
+  <div class="pc-wrap" id="pcWrap">
+    <img id="pcImg" alt="明信片">
+    <div class="pc-actions">
+      <button id="pcSave">
+        <svg viewBox="0 0 24 24"><path d="M12 4v11"/><path d="M7 10.5l5 5 5-5"/><path d="M5 19.5h14"/></svg>
+        <span>保存明信片</span>
+      </button>
+      <button id="pcShare" class="xhs">
+        <svg viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v4.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6H10"/></svg>
+        <span>分享到小红书</span>
+      </button>
+    </div>
+    <div class="follow-card">
+      <div class="fc-avatar">布丁</div>
+      <div class="fc-info"><b>布丁爱吃布丁</b><span>持续更新好玩的游戏</span></div>
+      <button id="followBtn">+ 关注布丁</button>
+    </div>
+    <button id="pcClose" class="pc-close">收下啦</button>
+  </div>
+</div>
+
+<!-- follow guide -->
+<div id="followSheet" class="hidden">
+  <div class="fs-card">
+    <div class="fs-avatar">布丁</div>
+    <h3>关注布丁，新游戏不迷路</h3>
+    <p class="fs-sub">布丁爱吃布丁 · 持续更新好玩的游戏</p>
+    <ol class="fs-steps">
+      <li><i>1</i><span>打开小红书，搜索「布丁爱吃布丁」</span></li>
+      <li><i>2</i><span>点进作者主页</span></li>
+      <li><i>3</i><span>点「关注」，新游戏上线第一时间见</span></li>
+    </ol>
+    <button id="followOk">好的，这就去关注</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- loading -->
+<div id="loader">
+  <div class="ld-bar"><i id="ldFill"></i></div>
+  <div class="ld-num" id="ldNum">0%</div>
+  <div class="ld-start" id="ldStart">轻触开始</div>
+</div>
+
+<script src="./app.js"></script>
+</body>
+</html>
